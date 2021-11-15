@@ -4,6 +4,9 @@ import subprocess
 import re
 import requests
 from bs4 import BeautifulSoup
+import sys
+
+invalid_email = ["service.aliyun.com"]
 
 
 class xuemo_inga:
@@ -27,6 +30,10 @@ class xuemo_inga:
                 if re.findall(r'Contact Email:(.*)\n', output):
                     self.email = re.findall(
                         r'Contact Email:(.*)\n', output)[0].strip()
+                    for thing in invalid_email:
+                        if thing in self.email:
+                            self.email = ""
+                            break
                 if re.findall(
                         r'Contact Phone:(.*)\n', output):
                     self.phone = re.findall(
@@ -57,18 +64,38 @@ class xuemo_inga:
         print(self.c_domain)
 
     def is_valid(self):
-        return self.email != '' or self.Registrant != ''
+
+        print("##################")
+        print(self.domain)
+        vaild = []
+        for thing in dir(self):
+            if not callable(getattr(self, thing)) and not thing.startswith("__") and thing != "domain" and thing != "c_domain" and getattr(self, thing) != "":
+                print(thing + ":"+getattr(self, thing))
+                vaild.append(thing)
+        return vaild != []
 
 
 def main():
-    domain = input("please input the domain:")
-    inga = xuemo_inga(domain)
-    inga.whois()
-    if inga.is_valid():
-        inga.reverse_whois()
-    else:
-        print("whois failed")
+    if len(sys.argv) == 1:
+        print("Usage of this tool:")
+        print("-d domain")
+        print("-f file")
         exit(0)
+    elif len(sys.argv) == 3:
+        domain_list = []
+        if sys.argv[1] == "-d":
+            domain_list = [sys.argv[2]]
+        elif sys.argv[1] == "-f":
+            file = open(sys.argv[2])
+            domain_list = file.read().split('\n')
+    for domain in domain_list:
+        inga = xuemo_inga(domain)
+        inga.whois()
+        if inga.is_valid():
+            inga.reverse_whois()
+        else:
+            print("whois failed")
+            exit(0)
 
 
 if __name__ == "__main__":
