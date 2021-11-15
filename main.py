@@ -61,6 +61,8 @@ class xuemo_inga:
     def reverse_whois(self):
         if self.email:
             self.reverse_whois_api(self.email)
+        if self.Registrant:
+            self.reverse_whois_api(self.Registrant)
         print(self.c_domain)
 
     def is_valid(self):
