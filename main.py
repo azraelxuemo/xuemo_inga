@@ -6,7 +6,7 @@ import requests
 from bs4 import BeautifulSoup
 import sys
 
-invalid_email = ["service.aliyun.com"]
+invalid_email = ["service.aliyun.com", "35.cn"]
 
 
 class xuemo_inga:
@@ -17,6 +17,7 @@ class xuemo_inga:
         self.email = ''
         self.c_domain = []
         self.Registrant = ''
+        self.sub_domain = []
 
     def whois(self):
         cmd = subprocess.Popen(
@@ -71,10 +72,27 @@ class xuemo_inga:
         print(self.domain)
         vaild = []
         for thing in dir(self):
-            if not callable(getattr(self, thing)) and not thing.startswith("__") and thing != "domain" and thing != "c_domain" and getattr(self, thing) != "":
+            if not callable(getattr(self, thing)) and not thing.startswith("__") and thing != "domain" and thing != "c_domain" and getattr(self, thing) != "" and thing != "sub_domain":
                 print(thing + ":"+getattr(self, thing))
                 vaild.append(thing)
         return vaild != []
+
+    def subdomain_crack(self):
+        self.subdomainfuzz(self.domain)
+        if self.c_domain != []:
+            for domain in self.c_domain:
+                self.subdomainfuzz(domain)
+
+    def subdomainfuzz(self, data):
+        file = open("main.txt")
+        for thing in file.read().split("\n"):
+            all_domain = thing+"."+data
+            response = requests.get(
+                "http://scan.javasec.cn/run.php?url="+all_domain)
+            if response.content != b'':
+                print(response.content)
+                self.sub_domain.append(response.content)
+        file.close()
 
 
 def main():
@@ -90,6 +108,7 @@ def main():
         elif sys.argv[1] == "-f":
             file = open(sys.argv[2])
             domain_list = file.read().split('\n')
+            file.close()
     for domain in domain_list:
         inga = xuemo_inga(domain)
         inga.whois()
@@ -98,6 +117,7 @@ def main():
         else:
             print("whois failed")
             exit(0)
+        # inga.subdomain_crack()
 
 
 if __name__ == "__main__":
